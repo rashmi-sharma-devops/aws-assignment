@@ -1,0 +1,80 @@
+
+# ==========================================
+# Terraform files
+# ==========================================
+
+# Terraform working directory and downloaded providers
+.terraform/
+**/.terraform/*
+
+# Terraform state files (may contain secrets)
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Terraform crash logs
+crash.log
+crash.*.log
+
+# Terraform plan files (may contain sensitive values)
+*.tfplan
+*.plan
+plan.out
+
+# Terraform variable files (may contain credentials)
+*.tfvars
+*.tfvars.json
+*.auto.tfvars
+*.auto.tfvars.json
+
+# Ignore local Terraform CLI configuration
+.terraformrc
+terraform.rc
+
+# Lock files are normally committed for reproducible provider versions.
+# Do NOT ignore .terraform.lock.hcl
+
+# ==========================================
+# AWS credentials and secrets
+# ==========================================
+
+# AWS CLI credentials and configuration
+.aws/
+**/.aws/
+
+# Environment files containing secrets
+.env
+.env.*
+!.env.example
+
+# Private keys and certificates
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+
+# SSH private keys
+id_rsa
+id_ed25519
+id_ecdsa
+*.ppk
+
+# ==========================================
+# Local and backup files
+# ==========================================
+
+*.backup
+*.bak
+*.old
+*.swp
+*.swo
+*~
+
+# Editor and operating system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
