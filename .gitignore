@@ -78,3 +78,42 @@ id_ecdsa
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Terraform working directory and downloaded providers
+.terraform/
+
+# Terraform state files - never commit state
+*.tfstate
+*.tfstate.*
+terraform.tfstate
+terraform.tfstate.backup
+terraform.tfstate.d
+
+# Terraform crash logs
+crash.log
+crash.*.log
+
+# Sensitive variable files
+*.tfvars
+*.tfvars.json
+!*.example.tfvars
+
+# Terraform override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Local environment files and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials
+credentials.*
+
+# Editor and operating system files
+.vscode/
+.DS_Store
+Thumbs.db
