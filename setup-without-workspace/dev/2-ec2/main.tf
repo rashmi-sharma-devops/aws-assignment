@@ -98,7 +98,13 @@ resource "aws_security_group" "ec2_sg" {
   vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
 
   # No inbound SSH rule is required for Session Manager.
-
+  ingress {
+    description     = "Allow HTTP from ALB"
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb_sg.id]
+  }
   egress {
     description = "Allow outbound traffic"
     from_port   = 0
@@ -142,4 +148,135 @@ resource "aws_instance" "web" {
   depends_on = [
     aws_iam_role_policy_attachment.ssm_core
   ]
+  user_data = <<-EOF
+    #!/bin/bash
+    dnf update -y
+    dnf install -y httpd
+
+    PRIVATE_IP=$(TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
+      -H "X-aws-ec2-metadata-token-ttl-seconds: 21600") && \
+      curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+      http://169.254.169.254/latest/meta-data/local-ipv4)
+
+    ENVIRONMENT="dev"
+
+    cat > /var/www/html/index.html <<HTML
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Terraform EC2 Web Server</title>
+    </head>
+    <body>
+      <h1>Hello from AWS EC2!</h1>
+      <p><strong>Server Private IP:</strong> $PRIVATE_IP</p>
+      <p><strong>Server Environment:</strong> $ENVIRONMENT</p>
+      <p>Web server installed using Terraform User Data.</p>
+    </body>
+    </html>
+    HTML
+
+    systemctl enable httpd
+    systemctl start httpd
+  EOF  
+}
+
+# --------------------------------------------------
+# 9. Security Group for ALB
+# --------------------------------------------------
+resource "aws_security_group" "alb_sg" {
+  name        = "assignment-alb-sg"
+  description = "Allow HTTP traffic to the ALB"
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
+
+  ingress {
+    description = "Allow HTTP from internet"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "Allow outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "assignment-alb-sg"
+    Environment = "dev"
+  }
+}
+
+# --------------------------------------------------
+# 10. Create Application Load Balancer
+# --------------------------------------------------
+resource "aws_lb" "web_alb" {
+  name               = "assignment-web-alb"
+  internal           = false
+  load_balancer_type = "application"
+
+  security_groups = [
+    aws_security_group.alb_sg.id
+  ]
+
+  subnets = data.terraform_remote_state.vpc.outputs.public_subnet_ids
+
+  tags = {
+    Name        = "assignment-web-alb"
+    Environment = "dev"
+  }
+}
+
+# --------------------------------------------------
+# 11. Create Target Group
+# --------------------------------------------------
+resource "aws_lb_target_group" "web_tg" {
+  name        = "assignment-web-tg"
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
+  target_type = "instance"
+
+  health_check {
+    enabled             = true
+    protocol            = "HTTP"
+    path                = "/"
+    port                = "traffic-port"
+    matcher             = "200"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+  }
+
+  tags = {
+    Name        = "assignment-web-tg"
+    Environment = "dev"
+  }
+}
+
+# --------------------------------------------------
+# 12. Register Private EC2 with Target Group
+# --------------------------------------------------
+resource "aws_lb_target_group_attachment" "web_attachment" {
+  target_group_arn = aws_lb_target_group.web_tg.arn
+  target_id        = aws_instance.web.id
+  port             = 80
+}
+
+# --------------------------------------------------
+# 13. Create HTTP Listener
+# --------------------------------------------------
+resource "aws_lb_listener" "web_listener" {
+  load_balancer_arn = aws_lb.web_alb.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.web_tg.arn
+  }
 }
