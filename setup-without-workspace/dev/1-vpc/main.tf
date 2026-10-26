@@ -117,3 +117,36 @@ resource "aws_route_table_association" "private_2" {
   route_table_id = aws_route_table.private.id
 }
 
+# 13. Allocate an Elastic IP for the NAT Gateway
+resource "aws_eip" "nat" {
+  domain = "vpc"
+
+  tags = {
+    Name        = "assignment-nat-eip"
+    Environment = "dev"
+  }
+}
+
+# 14. Create NAT Gateway in Public Subnet 1
+resource "aws_nat_gateway" "main" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public_1.id
+
+  tags = {
+    Name        = "assignment-nat-gateway"
+    Environment = "dev"
+  }
+
+  depends_on = [
+    aws_internet_gateway.main
+  ]
+}
+
+# 15. Add default route to the existing private route table
+resource "aws_route" "private_nat" {
+  route_table_id         = aws_route_table.private.id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.main.id
+}
+
+
