@@ -29,11 +29,7 @@ jobs:
         run: terraform fmt -check -recursive
 
       # Needed for validate on a clean GitHub runner.
-      # Does not initialize the configured S3 backend.
-      - name: Initialize without backend
-        working-directory: compute-dev
-        run: terraform init -backend=false -input=false
-
+     
       - name: Terraform Validate
         working-directory: compute-dev
         run: terraform validate -no-color
