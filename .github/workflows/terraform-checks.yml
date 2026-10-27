@@ -30,9 +30,26 @@ jobs:
 
       # Needed for validate on a clean GitHub runner.
      
-      - name: Terraform Validate
-        working-directory: compute-dev
-        run: terraform validate -no-color
+
+      - name: Terraform Validate All Directories
+        shell: bash
+        run: |
+          set -e
+          mapfile -t dirs < <(
+            find . \
+              -type d \
+              \( -name .git -o -name .terraform \) -prune -o \
+              -type f -name '*.tf' -printf '%h\n' |
+            sort -u
+          )
+
+          for dir in "${dirs[@]}"; do
+            echo "::group::Validating $dir"
+            terraform -chdir="$dir" init -backend=false -input=false
+            terraform -chdir="$dir" validate -no-color
+            echo "::endgroup::"
+          done
+
 
       - name: Install tfsec
         uses: aquasecurity/tfsec-action@v1.0.0
