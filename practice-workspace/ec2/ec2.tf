@@ -11,7 +11,7 @@ resource "aws_instance" "my_ec2" {
   instance_type = "t2.micro"
 
   tags = {
-    Name = "demo-${terraform.workspace}"
+    Name        = "demo-${terraform.workspace}"
     Environment = "${terraform.workspace}"
   }
 }

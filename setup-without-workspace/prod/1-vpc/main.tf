@@ -32,8 +32,8 @@ resource "aws_subnet" "public_2" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "public-subnet-2"
-    Type = "Public"
+    Name        = "public-subnet-2"
+    Type        = "Public"
     Environment = "prod"
   }
 }
@@ -45,8 +45,8 @@ resource "aws_subnet" "private_1" {
   availability_zone = "ap-south-1a"
 
   tags = {
-    Name = "private-subnet-1"
-    Type = "Private"
+    Name        = "private-subnet-1"
+    Type        = "Private"
     Environment = "prod"
   }
 }
@@ -58,8 +58,8 @@ resource "aws_subnet" "private_2" {
   availability_zone = "ap-south-1b"
 
   tags = {
-    Name = "private-subnet-2"
-    Type = "Private"
+    Name        = "private-subnet-2"
+    Type        = "Private"
     Environment = "prod"
   }
 }
@@ -69,7 +69,7 @@ resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
   tags = {
-    Name = "assignment-igw"
+    Name        = "assignment-igw"
     Environment = "prod"
   }
 }
@@ -84,7 +84,7 @@ resource "aws_route_table" "public" {
   }
 
   tags = {
-    Name = "public-route-table"
+    Name        = "public-route-table"
     Environment = "prod"
   }
 }
@@ -106,7 +106,7 @@ resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
 
   tags = {
-    Name = "private-route-table"
+    Name        = "private-route-table"
     Environment = "prod"
   }
 }
