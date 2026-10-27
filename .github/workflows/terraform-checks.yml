@@ -1,0 +1,54 @@
+
+name: Terraform Code Quality and Security
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  terraform-checks:
+    name: Terraform Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      # Needed for validate on a clean GitHub runner.
+      # Does not initialize the configured S3 backend.
+      - name: Initialize without backend
+        working-directory: compute-dev
+        run: terraform init -backend=false -input=false
+
+      - name: Terraform Validate
+        working-directory: compute-dev
+        run: terraform validate -no-color
+
+      - name: Install tfsec
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          working_directory: .
+          soft_fail: false
+
+      - name: Trivy Terraform Security Scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: misconfig
+          severity: HIGH,CRITICAL
+          exit-code: '1'
