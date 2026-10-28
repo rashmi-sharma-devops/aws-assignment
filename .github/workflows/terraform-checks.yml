@@ -71,7 +71,7 @@ jobs:
   terraform-deploy:
     name: Deploy Terraform
     needs: terraform-checks
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: github.ref_name == 'dev' || github.ref_name == 'prod'
     runs-on: ubuntu-latest
 
     strategy:
@@ -83,7 +83,8 @@ jobs:
 
     defaults:
       run:
-        working-directory: setup-with-modules/${{ github.ref_name == 'dev' && 'dev' || github.ref_name == 'prod' && 'prod' || 'none' }}/${{ matrix.directory }}
+        working-directory: setup-with-modules/${{ github.ref_name == 'dev' && 'dev' || 'prod' }}/${{ matrix.directory }}
+
 
     steps:
       - name: Checkout repository
