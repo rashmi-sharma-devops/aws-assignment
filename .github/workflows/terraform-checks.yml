@@ -83,7 +83,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: setup-with-modules/${{ github.ref_name == 'dev' && 'dev' || 'prod' }}/${{ matrix.directory }}
+        working-directory: setup-with-modules/${{ github.ref_name == 'dev' && 'dev' || github.ref_name == 'prod' && 'prod' || 'none' }}/${{ matrix.directory }}
 
     steps:
       - name: Checkout repository
