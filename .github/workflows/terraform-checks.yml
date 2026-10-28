@@ -1,13 +1,15 @@
-
 name: Terraform Code Quality and Security
 
 on:
   push:
     branches:
-      - main
+      - dev
+
   pull_request:
     branches:
-      - main
+      - prod
+    types:
+      - closed
   workflow_dispatch:
 
 permissions:
