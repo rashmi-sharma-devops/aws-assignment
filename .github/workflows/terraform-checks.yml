@@ -70,43 +70,63 @@ jobs:
         run: aws sts get-caller-identity
 
 
-  terraform-deploy:
-    name: Deploy Terraform
-    needs: terraform-checks
-    if: github.ref_name == 'dev' || github.ref_name == 'prod'
-    runs-on: ubuntu-latest
+  terraform-vpc:
+  name: Deploy VPC
+  needs: terraform-checks
+  if: github.ref_name == 'dev' || github.ref_name == 'prod'
+  runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        directory:
-          - vpc
-          - ec2
+  defaults:
+    run:
+      working-directory: setup-with-modules/${{ github.ref_name == 'dev' && 'dev' || 'prod' }}/vpc
 
-    defaults:
-      run:
-        working-directory: setup-with-modules/${{ github.ref_name == 'dev' && 'dev' || 'prod' }}/${{ matrix.directory }}
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v6
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-south-1
+
+    - name: Terraform Init
+      run: terraform init -input=false
+
+    - name: Terraform Plan
+      run: terraform plan -input=false
 
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v4
+terraform-ec2:
+  name: Deploy EC2
+  needs: terraform-vpc
+  if: github.ref_name == 'dev' || github.ref_name == 'prod'
+  runs-on: ubuntu-latest
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
+  defaults:
+    run:
+      working-directory: setup-with-modules/${{ github.ref_name == 'dev' && 'dev' || 'prod' }}/ec2
 
-      - name: Verify AWS identity
-        run: aws sts get-caller-identity
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Terraform Init
-        run: terraform init -input=false
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v4
 
-      - name: Terraform Plan
-        run: terraform plan -input=false
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v6
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-south-1
+
+    - name: Terraform Init
+      run: terraform init -input=false
+
+    - name: Terraform Plan
+      run: terraform plan -input=false
