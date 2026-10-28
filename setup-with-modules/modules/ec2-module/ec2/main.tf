@@ -32,7 +32,8 @@ resource "aws_iam_instance_profile" "ec2_ssm_profile" {
 
   tags = {
     Name        = "assignment-ec2-ssm-profile"
-    Environment = var.environment
+    Environment = var.environmen
+    Owner       = "Rashmi" 
   }
 }
 
