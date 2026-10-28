@@ -58,12 +58,15 @@ jobs:
     name: Deploy VPC
     needs: terraform-checks
     if: |
-      github.ref_name == 'dev' ||
-      (github.event_name == 'push' && github.ref_name == 'prod') ||
+      (github.event_name == 'push' &&
+      github.ref_name == 'dev') ||
       (github.event_name == 'pull_request' &&
-       github.event.pull_request.merged == true &&
-       github.event.pull_request.base.ref == 'prod' &&
-       github.event.pull_request.head.ref == 'dev')
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'prod' &&
+      github.event.pull_request.head.ref == 'dev') ||
+      (github.event_name == 'workflow_dispatch' &&
+      (github.ref_name == 'dev' || github.ref_name == 'prod'))
     runs-on: ubuntu-latest
 
     defaults:
@@ -91,18 +94,21 @@ jobs:
         run: terraform plan -input=false
 
       - name: Terraform apply
-        run: terraform apply -input=false
+        run: terraform apply -input=false -auto-approve
 
   terraform-ec2:
     name: Deploy EC2
     needs: terraform-vpc
     if: |
-      github.ref_name == 'dev' ||
-      (github.event_name == 'push' && github.ref_name == 'prod') ||
+      (github.event_name == 'push' &&
+      github.ref_name == 'dev') ||
       (github.event_name == 'pull_request' &&
-       github.event.pull_request.merged == true &&
-       github.event.pull_request.base.ref == 'prod' &&
-       github.event.pull_request.head.ref == 'dev')
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'prod' &&
+      github.event.pull_request.head.ref == 'dev') ||
+      (github.event_name == 'workflow_dispatch' &&
+      (github.ref_name == 'dev' || github.ref_name == 'prod'))
     runs-on: ubuntu-latest
 
     defaults:
@@ -130,4 +136,4 @@ jobs:
         run: terraform plan -input=false
 
       - name: Terraform apply
-        run: terraform apply -input=false
+        run: terraform apply -input=false -auto-approve
